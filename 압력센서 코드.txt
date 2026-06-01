@@ -1,0 +1,43 @@
+// 압력센서(2인탑승방지) 코드
+
+// 센서 핀 설정
+const int sensorPins[4] = {A0, A1, A2, A3};         // 아날로그 핀 A0~A3에 압력센서 4개 연결
+
+// 부저 핀 설정
+const int buzzerPin = 8;                            // 디지털 8번 핀에 부저 연결
+
+// 임계값
+const int threshold = 20;                           // 압력 판단 기준값 (이하일 경우 미탑승으로 간주)
+
+void setup() {
+  Serial.begin(9600);                               // 시리얼 통신 시작 (모니터 출력용)
+  pinMode(buzzerPin, OUTPUT);                       // 부저 핀을 출력 모드로 설정
+  digitalWrite(buzzerPin, LOW);                     // 시작 시 부저 OFF
+}
+
+void loop() {
+  bool allAboveThreshold = true;                    // 모든 센서가 기준 이상일 때 true
+
+  for (int i = 0; i < 4; i++) {                     // 4개의 센서를 순회하며 읽기
+    int sensorValue = analogRead(sensorPins[i]);   // 센서 i번의 아날로그 값 읽기
+    Serial.print("Sensor ");
+    Serial.print(i);                                // 센서 번호 출력
+    Serial.print(": ");
+    Serial.print(sensorValue);                      // 센서 값 출력
+    Serial.print("\t");
+
+    if (sensorValue <= threshold) {                 // 임계값 이하인 센서가 있다면
+      allAboveThreshold = false;                    // 조건 미충족 → 부저 울리지 않음
+    }
+  }
+
+  Serial.println();                                 // 센서 값 출력 후 줄 바꿈
+
+  if (allAboveThreshold) {                          // 모든 센서가 임계값 초과 시
+    digitalWrite(buzzerPin, HIGH);                  // 부저 ON (2인탑승 감지)
+  } else {
+    digitalWrite(buzzerPin, LOW);                   // 부저 OFF
+  }
+
+  delay(200);                                       // 0.2초마다 반복 측정
+}

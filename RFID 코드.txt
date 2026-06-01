@@ -1,0 +1,173 @@
+#include <SPI.h>
+#include <MFRC522.h>
+#include <SoftwareSerial.h>
+
+#define SS_PIN 10
+#define RST_PIN 9
+#define HALL_PIN 8
+#define MOTOR_STEPS_90 270  // 모터 90도 회전 스텝 수 (모터에 맞게 조정)
+
+MFRC522 rfid(SS_PIN, RST_PIN);
+SoftwareSerial HC06(2, 3);  // RX, TX
+
+int motorPin1 = 4;
+int motorPin2 = 5;
+int motorPin3 = 6;
+int motorPin4 = 7;
+
+byte authorizedUID[] = {0x1A, 0x78, 0x90, 0x7F};
+
+bool isDoorOpen = false;
+bool rfidDetected = false;  // RFID 카드 상태 추적
+unsigned long startTime = 0;  // 반납 시작 시간
+unsigned long timeout = 300000;  // 5분 (300,000 밀리초)
+
+void setup() {
+  Serial.begin(9600);
+  HC06.begin(9600);
+  SPI.begin();
+  rfid.PCD_Init();
+
+  pinMode(HALL_PIN, INPUT);
+  pinMode(motorPin1, OUTPUT);
+  pinMode(motorPin2, OUTPUT);
+  pinMode(motorPin3, OUTPUT);
+  pinMode(motorPin4, OUTPUT);
+
+  Serial.println("== RFID + 홀센서 + 블루투스 제어 시작 ==");
+
+  if (checkRFID()) {
+    Serial.println("RFID 카드가 정상적으로 인식되었습니다.");
+  } else {
+    Serial.println("RFID 카드가 인식되지 않았습니다.");
+  }
+}
+
+void loop() {
+  if (HC06.available()) {
+    char c = HC06.read();
+    Serial.print("Bluetooth 수신: ");
+    Serial.println(c);
+
+    // [1] 열기 버튼: 조건 없이 한 번만 열림
+    if (c == '1') {
+      if (!isDoorOpen) {
+        Serial.println("보관함 열림");
+        HC06.println("보관함 열림");
+        openDoor();
+        isDoorOpen = true;
+        startTime = millis();  // 타이머 시작
+      } else {
+        Serial.println("이미 열림 상태 - 추가 동작 없음");
+        HC06.println("이미 열림 상태 - 추가 동작 없음");
+      }
+    }
+
+    // [2] 반납하기 버튼: RFID + 홀센서 확인 후, 조건 불충족 시 경고 전송
+    if (c == '2') {
+      Serial.println("반납하기 요청됨");
+      HC06.println("반납하기 요청됨");
+
+      int hallValue = digitalRead(HALL_PIN);  // 홀센서 상태 확인
+      bool rfidPresent = checkRFID();         // RFID 접촉 확인
+
+      if (!isDoorOpen) {
+        Serial.println(">> 이미 닫힌 상태 - 동작 없음");
+        HC06.println(">> 이미 닫힌 상태 - 동작 없음");
+        return;
+      }
+
+      if (rfidPresent && hallValue == LOW) {
+        Serial.println("조건 충족됨 - 보관함 닫힘 시작");
+        HC06.println("조건 충족됨 - 보관함 닫힘 시작");
+        closeDoor();
+        isDoorOpen = false;
+      } else {
+        if (!rfidPresent) {
+          Serial.print("RFID 없음 ");
+          HC06.print("RFID 없음 ");
+        }
+        if (hallValue != LOW) {
+          Serial.print("홀센서 미감지 ");
+          HC06.print("홀센서 미감지 ");
+        }
+        Serial.println("- 닫기 취소됨");
+        HC06.println("- 닫기 취소됨");
+
+        // ⛔ 조건 미충족 → 앱에 요금 경고 신호 전송
+     
+
+        if (millis() - startTime > timeout) {
+          Serial.println(">> 보관함이 제대로 반납되지 않았습니다.");
+          HC06.println(">> 보관함이 제대로 반납되지 않았습니다.");
+        }
+      }
+    }
+  }
+}
+
+// ✅ 실시간 RFID 카드 접촉 여부 확인
+bool checkRFID() {
+  if (rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial()) {
+    if (!rfidDetected) {
+      if (compareUID(rfid.uid.uidByte, authorizedUID)) {
+        Serial.println(">> RFID 실시간 감지됨 (홀센서 미감지)");
+        HC06.println(">> RFID 실시간 감지됨 (홀센서 미감지)");
+        rfidDetected = true;
+        rfid.PICC_HaltA();
+        return true;
+      }
+    }
+  } else {
+    rfidDetected = false;
+  }
+  return false;
+}
+
+// ✅ UID 비교
+bool compareUID(byte* cardUID, byte* authorizedUID) {
+  for (byte i = 0; i < 4; i++) {
+    if (cardUID[i] != authorizedUID[i]) return false;
+  }
+  return true;
+}
+
+// ✅ 문 열기
+void openDoor() {
+  Serial.println(">> 모터 -90도 회전 중 (문 열기)");
+  for (int i = 0; i < MOTOR_STEPS_90; i++) {
+    stepMotorReverse(i % 4);
+    delay(10);
+  }
+}
+
+// ✅ 문 닫기
+void closeDoor() {
+  Serial.println(">> 모터 +90도 회전 중 (문 닫기)");
+  for (int i = 0; i < MOTOR_STEPS_90; i++) {
+    stepMotor(i % 4);
+    delay(9);
+  }
+  Serial.println("보관함 닫혔습니다");
+  HC06.println("보관함 닫혔습니다");
+}
+
+// ✅ 모터 정방향 (시계 방향)
+void stepMotor(int step) {
+  switch (step) {
+    case 0: digitalWrite(motorPin1, HIGH); digitalWrite(motorPin2, LOW); digitalWrite(motorPin3, LOW); digitalWrite(motorPin4, LOW); break;
+    case 1: digitalWrite(motorPin1, LOW); digitalWrite(motorPin2, HIGH); digitalWrite(motorPin3, LOW); digitalWrite(motorPin4, LOW); break;
+    case 2: digitalWrite(motorPin1, LOW); digitalWrite(motorPin2, LOW); digitalWrite(motorPin3, HIGH); digitalWrite(motorPin4, LOW); break;
+    case 3: digitalWrite(motorPin1, LOW); digitalWrite(motorPin2, LOW); digitalWrite(motorPin3, LOW); digitalWrite(motorPin4, HIGH); break;
+  }
+}
+
+// ✅ 모터 역방향 (반시계 방향)
+void stepMotorReverse(int step) {
+  switch (step) {
+    case 0: digitalWrite(motorPin1, LOW); digitalWrite(motorPin2, LOW); digitalWrite(motorPin3, LOW); digitalWrite(motorPin4, HIGH); break;
+    case 1: digitalWrite(motorPin1, LOW); digitalWrite(motorPin2, LOW); digitalWrite(motorPin3, HIGH); digitalWrite(motorPin4, LOW); break;
+    case 2: digitalWrite(motorPin1, LOW); digitalWrite(motorPin2, HIGH); digitalWrite(motorPin3, LOW); digitalWrite(motorPin4, LOW); break;
+    case 3: digitalWrite(motorPin1, HIGH); digitalWrite(motorPin2, LOW); digitalWrite(motorPin3, LOW); digitalWrite(motorPin4, LOW); break;
+  }
+}

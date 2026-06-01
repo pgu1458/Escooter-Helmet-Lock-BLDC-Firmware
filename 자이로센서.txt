@@ -1,0 +1,61 @@
+#include <Wire.h>
+#include <MPU6050.h>
+#include <SoftwareSerial.h>
+
+SoftwareSerial BTSerial(2, 3);  // HC-06: RX, TX
+MPU6050 mpu;
+
+float yaw = 0;
+float yawOffset = 0;
+unsigned long lastTime = 0;
+char lastDirection = 'C';
+
+void setup() {
+  Serial.begin(9600);
+  Wire.begin();
+  BTSerial.begin(9600);
+  mpu.initialize();
+
+  if (!mpu.testConnection()) {
+    Serial.println("MPU6050 연결 실패!");
+    while (1);
+  }
+
+  delay(2000); // 센서 안정화 시간
+
+  // 초기화
+  yaw = 0;
+  yawOffset = 0;
+  lastTime = millis();
+
+  Serial.println("자이로 시작됨, 방향 전송 대기 중...");
+}
+
+void loop() {
+  int16_t gx, gy, gz;                         // 자이로 센서의 3축 각속도 값 저장 변수
+
+  mpu.getRotation(&gx, &gy, &gz);             // 자이로 센서에서 각속도 값 읽기
+
+  Serial.print("Z축 각속도 (gz): ");          // gz 출력 추가
+  Serial.println(gz);
+
+  unsigned long now = millis();               // 현재 시간(밀리초 단위) 저장
+  float dt = (now - lastTime) / 1000.0;       // 이전 시간과의 차이를 초 단위로 계산
+  lastTime = now;                             // 다음 루프를 위해 현재 시간을 lastTime에 저장
+
+  yaw += (gz / 131.0) * dt;                   // Z축 회전속도를 적분하여 누적 yaw 각도 계산
+  float deltaYaw = yaw - yawOffset;           // 기준 yaw 값과 현재 yaw 값의 차이 계산
+
+  char direction;                             // 회전 방향을 저장할 변수 선언
+  if (deltaYaw > 1.5) direction = 'L';        // 1.5도 이상 좌회전이면 'L'
+  else if (deltaYaw < -1.5) direction = 'R';  // -1.5도 이하 우회전이면 'R'
+
+  if (direction != lastDirection && direction != 'C') {  // 이전과 다른 방향일 때만 전송
+    lastDirection = direction;               // 현재 방향을 이전 방향으로 저장
+    BTSerial.println(direction);             // 블루투스 직렬 통신으로 방향 전송
+    Serial.print("전송: ");                  
+    Serial.println(direction);               // 시리얼 모니터에 방향 출력
+  }
+
+  delay(100);                                 // 100ms 지연 (데이터 전송 간격 제어)
+}

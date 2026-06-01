@@ -1,0 +1,108 @@
+#include <LiquidCrystal_I2C.h>
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+// 터치센서 핀
+const int touchSensor1 = 4;
+const int touchSensor2 = 6;
+
+// --- LED 핀 설정 ---
+const int leftLED = 7;
+const int rightLED = 8;
+
+int lastState1 = LOW;
+int lastState2 = LOW;
+
+char currentDir = 'C';         // 현재 표시 중인 방향
+char requestedDir = 'C';       // 외부로부터 요청받은 새로운 방향
+
+void animateLeft() {
+  lcd.clear();
+  for (int i = 15; i >= 0; i--) {
+    if (requestedDir != 'L') break;
+    lcd.setCursor(i, 0); lcd.print("<<");
+    lcd.setCursor(i, 1); lcd.print("<<");
+    delay(15);
+  }
+}
+
+void animateRight() {
+  lcd.clear();
+  for (int i = 0; i < 16; i++) {
+    if (requestedDir != 'R') break;
+    lcd.setCursor(i, 0); lcd.print(">>");
+    lcd.setCursor(i, 1); lcd.print(">>");
+    delay(15);
+  }
+}
+
+void setup() {
+  pinMode(touchSensor1, INPUT);
+  pinMode(touchSensor2, INPUT);
+
+  // --- LED 핀을 출력으로 설정 ---
+  pinMode(leftLED, OUTPUT);
+  pinMode(rightLED, OUTPUT);
+
+  Serial.begin(9600);      
+  Serial1.begin(9600);     
+  Serial2.begin(9600);     
+
+  lcd.init();
+  lcd.backlight();
+
+  Serial.println("Mega Ready (Touch + LCD)");
+}
+
+void loop() {
+  // 터치센서 상태 확인 및 전송
+  int state1 = digitalRead(touchSensor1);
+  int state2 = digitalRead(touchSensor2);
+
+  if (state1 == HIGH || state1 == LOW) {  
+    if (state1 != lastState1) {
+      lastState1 = state1;
+      Serial1.println(state1 == HIGH ? "ON1" : "OFF1");
+      Serial.println(state1 == HIGH ? "Sensor 1: ON1" : "Sensor 1: OFF1");
+      delay(50);
+    }
+  }
+
+  if (state2 == HIGH || state2 == LOW) {  
+    if (state2 != lastState2) {
+      lastState2 = state2;
+      Serial1.println(state2 == HIGH ? "ON2" : "OFF2");
+      Serial.println(state2 == HIGH ? "Sensor 2: ON2" : "Sensor 2: OFF2");
+      delay(50);
+    }
+  }
+
+  // 자이로 방향 수신 → 요청 방향 갱신
+  if (Serial2.available()) {
+    requestedDir = Serial2.read();
+    Serial.print("수신된 방향: ");
+    Serial.println(requestedDir);
+  }
+
+  // 실제 방향 애니메이션 실행
+  if (requestedDir != currentDir) {
+    currentDir = requestedDir;
+
+    // --- LED 상태 갱신 ---
+    if (currentDir == 'L') {
+      digitalWrite(leftLED, HIGH);
+      digitalWrite(rightLED, LOW);
+      animateLeft();
+      Serial.println("LCD: ← 애니메이션");
+    } else if (currentDir == 'R') {
+      digitalWrite(leftLED, LOW);
+      digitalWrite(rightLED, HIGH);
+      animateRight();
+      Serial.println("LCD: → 애니메이션");
+    } else if (currentDir == 'C') {
+      digitalWrite(leftLED, LOW);
+      digitalWrite(rightLED, LOW);
+      lcd.clear();
+      Serial.println("LCD: 초기화됨");
+    }
+  }
+}

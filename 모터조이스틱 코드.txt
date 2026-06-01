@@ -1,0 +1,99 @@
+#include <SoftwareSerial.h>
+
+// 조이스틱
+const int VRY = A1;
+const int motorPWM = 11;
+const int DIR = 9;
+
+// 블루투스 통신 (헬멧 HC-05 슬레이브와 연결)
+SoftwareSerial btSerial(8, 7);  // RX, TX
+
+// 터치센서 상태 변수
+bool sensor1 = false;
+bool sensor2 = false;
+bool lastSensor1 = false;
+bool lastSensor2 = false;
+
+int currentSpeed = 0;
+unsigned long lastSpeedPrintTime = 0;  // 마지막 속도 출력 시간
+
+void setup() {
+  Serial.begin(9600);
+  btSerial.begin(9600);
+
+  pinMode(motorPWM, OUTPUT);
+  pinMode(DIR, OUTPUT);
+
+  stopMotor();
+  Serial.println("Kickboard Ready");
+}
+
+void loop() {
+  // 1. 블루투스로 터치센서 상태 수신
+  if (btSerial.available()) {
+    String data = btSerial.readStringUntil('\n');
+    data.trim();
+
+    if (data == "ON1") sensor1 = true;
+    else if (data == "OFF1") sensor1 = false;
+    else if (data == "ON2") sensor2 = true;
+    else if (data == "OFF2") sensor2 = false;
+  }
+
+  // 2. 센서 상태 변화 시 실시간 출력
+  if (sensor1 != lastSensor1) {
+    lastSensor1 = sensor1;
+    Serial.println(sensor1 ? "Sensor1: ON" : "Sensor1: OFF");
+  }
+  if (sensor2 != lastSensor2) {
+    lastSensor2 = sensor2;
+    Serial.println(sensor2 ? "Sensor2: ON" : "Sensor2: OFF");
+  }
+
+  // 3. 조이스틱 읽기
+  int yVal = analogRead(VRY);
+
+  // 4. 센서 모두 ON일 때만 조이스틱 제어
+  if (sensor1 && sensor2) {
+    if (yVal > 540) {
+      int targetSpeed = map(yVal, 540, 1020, 0, 200);
+      if (currentSpeed < targetSpeed) currentSpeed++;
+      else if (currentSpeed > targetSpeed) currentSpeed--;
+      moveMotor(currentSpeed);
+    } else {
+      if (currentSpeed > 0) {
+        currentSpeed--;
+        moveMotor(currentSpeed);
+      } else {
+        stopMotor();
+      }
+    }
+  } else {
+    // 센서 하나라도 OFF면 감속 후 정지
+    if (currentSpeed > 0) {
+      currentSpeed--;
+      moveMotor(currentSpeed);
+    } else {
+      stopMotor();
+    }
+  }
+
+  // 5. 모터 속도 시리얼 출력 (3초마다)
+  if (millis() - lastSpeedPrintTime >= 3000) {
+    Serial.print("Motor Speed: ");
+    Serial.println(currentSpeed);
+    lastSpeedPrintTime = millis();
+  }
+
+  delay(10);
+}
+
+void moveMotor(int speed) {
+  digitalWrite(DIR, HIGH);
+  analogWrite(motorPWM, speed);
+}
+
+void stopMotor() {
+  analogWrite(motorPWM, 0);
+  digitalWrite(DIR, LOW);
+}
