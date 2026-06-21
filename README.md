@@ -1,6 +1,7 @@
 #  공유 전동킥보드 — 헬멧 보관함 + BLDC 제어 + 방향지시등 + 모바일 앱
 
 [![논문](https://img.shields.io/badge/논문-JKIECS%20vol.21%20no.1%20(2026.02)-blue)](http://dx.doi.org/10.13067/JKIECS.2026.21.1.227)
+
 [![DOI](https://img.shields.io/badge/DOI-10.13067%2FJKIECS.2026.21.1.227-green)](http://dx.doi.org/10.13067/JKIECS.2026.21.1.227)
 
 >  **논문 게재** — 한국전자통신학회 논문지 (JKIECS) vol.21 no.1, 2026.02 pp.227-238
@@ -19,8 +20,10 @@
 전체 시스템은 ① 헬멧 착용 감지 + BLDC 제어 ② 방향지시등 ③ 다중 탑승 방지 ④ 헬멧 보관함 — 4개 모듈로 구성되며, App Inventor 기반 모바일 앱으로 실시간 제어가 가능합니다. 저는 그중 **헬멧 착용 감지·BLDC 모터 제어·헬멧 보관함·모바일 앱**을 단독으로 담당했고, **방향지시등**은 팀원과 협업했습니다.
 
 <img width="1078" height="755" alt="image" src="https://github.com/user-attachments/assets/98f8446d-a74e-4952-8ed8-4b5ad515f5cc" />
+<전체 구성도>
 
 <img width="318" height="649" alt="image" src="https://github.com/user-attachments/assets/a9aa5510-029d-49ba-a1bf-a13767c13201" />
+<헬멧>
 
 ---
 
