@@ -107,9 +107,14 @@ RFID 단독 검증이라면 태그만 가까이 대도 반납으로 인식되는
 
 두 센서의 검출 거리가 크게 달라서, **헬멧 거치 위치를 두 센서가 모두 검출 가능한 영역에 정확히 맞추는 것**이 핵심이었습니다. RFID 리더는 3.6 cm까지 여유 있게 잡히지만, 홀센서는 0.5 cm 이내로 매우 짧기 때문에 거치대 구조 자체를 홀센서 기준에 맞춰 설계했습니다.
 
-<img width="999" alt="RFID·홀센서 거리별 인식률" src="attachment://1781855308402_image.png" />
+<img width="600" height="300" alt="image" src="https://github.com/user-attachments/assets/f6190942-40ab-4164-9de3-5a6a15cf2ebe" />
+
+<RFID / 홀 센서 인식률>
+
 
 <img width="587" height="545" alt="image" src="https://github.com/user-attachments/assets/86508367-7b1e-4342-889b-04d6693df0cc" />
+
+
 
 <img width="740" height="542" alt="image" src="https://github.com/user-attachments/assets/a4af2af5-962c-41b0-9be4-03cd9a3b6623" />
 
