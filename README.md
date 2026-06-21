@@ -112,11 +112,9 @@ RFID 단독 검증이라면 태그만 가까이 대도 반납으로 인식되는
 <RFID / 홀 센서 인식률>
 
 
-<img width="587" height="545" alt="image" src="https://github.com/user-attachments/assets/86508367-7b1e-4342-889b-04d6693df0cc" />
+<img width="600" height="400" alt="image" src="https://github.com/user-attachments/assets/a4af2af5-962c-41b0-9be4-03cd9a3b6623" />
 
-
-
-<img width="740" height="542" alt="image" src="https://github.com/user-attachments/assets/a4af2af5-962c-41b0-9be4-03cd9a3b6623" />
+<RFID / 홀 센서 실제 연결상태 >
 
 ---
 
