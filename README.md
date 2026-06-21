@@ -20,9 +20,11 @@
 전체 시스템은 ① 헬멧 착용 감지 + BLDC 제어 ② 방향지시등 ③ 다중 탑승 방지 ④ 헬멧 보관함 — 4개 모듈로 구성되며, App Inventor 기반 모바일 앱으로 실시간 제어가 가능합니다. 저는 그중 **헬멧 착용 감지·BLDC 모터 제어·헬멧 보관함·모바일 앱**을 단독으로 담당했고, **방향지시등**은 팀원과 협업했습니다.
 
 <img width="1078" height="755" alt="image" src="https://github.com/user-attachments/assets/98f8446d-a74e-4952-8ed8-4b5ad515f5cc" />
+
 <전체 구성도>
 
 <img width="318" height="649" alt="image" src="https://github.com/user-attachments/assets/a9aa5510-029d-49ba-a1bf-a13767c13201" />
+
 <앱 인벤터를 활용한 앱 제작>
 
 ---
@@ -66,6 +68,8 @@
 단순한 ON/OFF 스위치가 아니라 헬멧 안쪽의 자연스러운 접촉을 감지하기 위해 터치센서 위치와 감도를 여러 차례 조정했습니다. 헬멧을 벗으면 즉시 모터가 잠기고, 다시 쓰면 잠금이 풀리는 흐름을 끊김 없이 동작하도록 구현했습니다.
 
 <img width="1081" height="1440" alt="image" src="https://github.com/user-attachments/assets/a636ff44-c094-4e63-98d2-9bb75adbab0d" />
+
+<방향 지시등에 대한 헬멧 LCD>
 
 ---
 
