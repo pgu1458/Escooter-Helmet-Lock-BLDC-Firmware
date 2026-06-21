@@ -23,7 +23,7 @@
 <전체 구성도>
 
 <img width="318" height="649" alt="image" src="https://github.com/user-attachments/assets/a9aa5510-029d-49ba-a1bf-a13767c13201" />
-<헬멧>
+<앱 인벤터를 활용한 앱 제작>
 
 ---
 
